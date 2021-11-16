@@ -1,18 +1,23 @@
 from fastapi import FastAPI
+import random
+import string
 
 from models import annotell, open_label
+from utils import calculations
 
 app = FastAPI()
 
 
 @app.post("/")
 def convert(annotation: annotell.AnnotellAnnotation):
+    # Populate openlabel elements
     elements = {}
+    objects = {}
     relations = {}
     relation_counter = 0
     for shapeObjectName, shapeObjectProperty in annotation.shapeProperties.items():
         # Populate openlabel element objects
-        elements[shapeObjectName] = open_label.ElementObject(
+        objects[shapeObjectName] = open_label.ElementObject(
             name=shapeObjectName,
             type=shapeObjectProperty['@all'].class_
         )
@@ -36,11 +41,61 @@ def convert(annotation: annotell.AnnotellAnnotation):
                 type="PushingOrPulling"
             )
         relation_counter += 1
+    elements = open_label.OpenLabelElement(
+        objects=objects,
+        relations=relations
+    )
+    # Populate openlabel frames
+    frame_objects = {}
+    for shape in annotation.shapes["CAM"].features:
+        # Populate openlabel frames objects
+        frame_objects[shape.id] = open_label.FrameObject(
+            object_data=open_label.FrameObjectData(
+                bbox=[open_label.FrameObjectBbox(
+                    name="bbox-" + "".join(random.choices(string.ascii_lowercase + string.digits, k=8)),
+                    stream="CAM",
+                    val=[
+                        # Calculating midpoint of shape
+                        *calculations.calculate_midpoint(*shape.geometry.coordinates.minX.coordinates,
+                                                         *shape.geometry.coordinates.maxX.coordinates),
+                        # Calculating width
+                        calculations.calculate_points_segment(*shape.geometry.coordinates.minX.coordinates,
+                                                              *shape.geometry.coordinates.maxX.coordinates),
+                        # Calculating height
+                        calculations.calculate_points_segment(*shape.geometry.coordinates.minY.coordinates,
+                                                              *shape.geometry.coordinates.maxY.coordinates),
+                    ]
+                )]
+            )
+        )
+        if annotation.shapeProperties[shape.id]["@all"].Unclear is not None:
+            frame_objects[shape.id].object_data.boolean = [open_label.FrameObjectBooleanOrText(
+                        name="Unclear",
+                        val=annotation.shapeProperties[shape.id]["@all"].Unclear
+                    )]
+        if annotation.shapeProperties[shape.id]["@all"].ObjectType is not None:
+            frame_objects[shape.id].object_data.text = [open_label.FrameObjectBooleanOrText(
+                name="ObjectType",
+                val=annotation.shapeProperties[shape.id]["@all"].ObjectType
+            )]
+    frame_relations = {}
+    for relation_id in relations.keys():
+        frame_relations[relation_id] = {}
+    open_label_frame = open_label.OpenLabelFrame(
+        objects=frame_objects,
+        relations=frame_relations
+    )
+    frames = {
+        "": open_label_frame
+    }
+    open_label_wrapper = open_label.OpenLabelWrapper(
+        elements=elements,
+        frames=frames
+    )
+    open_label_data = {
+        'openlabel': open_label_wrapper
+    }
+    open_label_annotation = open_label.OpenLabelAnnotation(data=open_label_data)
+    return open_label_annotation.json()
 
-    return annotation
-
-
-# @app.post("/")
-# def convert(annotation: open_label.OpenLabelAnnotation):
-#     return annotation
 

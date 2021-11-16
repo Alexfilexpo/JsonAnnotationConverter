@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, validator
 
 from typing import Dict, List, Optional, Union
 
@@ -33,7 +33,7 @@ class FrameObjectBbox(BaseModel):
 
 class FrameObjectBooleanOrText(BaseModel):
     name: str
-    val: Optional[Union[str, bool]]
+    val: Optional[Union[bool, str]]
 
 
 class FrameObjectData(BaseModel):

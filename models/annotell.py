@@ -48,12 +48,12 @@ class GeometryCoords(BaseModel):
 
 
 class ShapeGeometry(BaseModel):
-    coordinates: dict
+    coordinates: GeometryCoords
     type: str
 
 
 class Shape(BaseModel):
-    geometry: dict
+    geometry: ShapeGeometry
     id: str
     properties: dict
     type: str
@@ -69,6 +69,6 @@ class AnnotellAnnotation(BaseModel):
     internalProperties: Dict[str, InternalProperty]
     properties: dict
     shapeProperties: Dict[str, Dict[str, ShapeProperty]]
-    shapes: dict
+    shapes: Dict[str, ShapesWrapper]
 
 
