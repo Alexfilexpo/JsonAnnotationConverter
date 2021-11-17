@@ -1,17 +1,12 @@
-from fastapi import FastAPI
 import random
 import string
 
 from models import annotell, open_label
 from utils import calculations
 
-app = FastAPI()
 
-
-@app.post("/")
-def convert(annotation: annotell.AnnotellAnnotation):
+def converter(annotation: annotell.AnnotellAnnotation):
     # Populate openlabel elements
-    elements = {}
     objects = {}
     relations = {}
     relation_counter = 0
@@ -97,5 +92,3 @@ def convert(annotation: annotell.AnnotellAnnotation):
     }
     open_label_annotation = open_label.OpenLabelAnnotation(data=open_label_data)
     return open_label_annotation.json()
-
-
