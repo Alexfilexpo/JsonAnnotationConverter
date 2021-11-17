@@ -1,4 +1,4 @@
-from src.services.converter import converter
+from services.converter import converter
 import json
 
 

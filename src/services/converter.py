@@ -1,13 +1,6 @@
 import random
 import string
 
-# Allow script to be run inside api; allow relative imports
-import sys
-import os
-
-SCRIPT_DIR = os.path.dirname(os.path.abspath(__file__))
-sys.path.append(os.path.dirname(SCRIPT_DIR))
-
 from models import annotell, open_label
 from utils import calculations
 
